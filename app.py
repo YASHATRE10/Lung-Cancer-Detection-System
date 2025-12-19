@@ -459,7 +459,15 @@ vgg_base = VGG16(weights='imagenet', include_top=False, input_shape=(128, 128, 3
 vgg_base.trainable = False
 
 # === MongoDB setup ===
-client = MongoClient("mongodb://localhost:27017/")
+# Allow overriding via environment variable for flexibility
+MONGO_URI = os.environ.get('MONGO_URI', 'mongodb://localhost:27017/')
+client = MongoClient(MONGO_URI, serverSelectionTimeoutMS=5000)
+try:
+    # Validate connection early to surface issues clearly
+    client.admin.command('ping')
+except Exception as e:
+    # Log connection errors to console; app can still start but DB ops will fail
+    print(f"MongoDB connection failed: {e}")
 db = client['lung_cancer_detection']
 users_collection = db['users']
 predictions_collection = db['predictions']
